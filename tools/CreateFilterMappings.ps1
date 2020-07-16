@@ -198,7 +198,12 @@ function Add-SolutionReference
         [string]$ServiceFolderPath
     )
 
-    $CsprojFiles = Get-ChildItem -Path $ServiceFolderPath -Filter "*.csproj" -Recurse | Where-Object { ($_.FullName -notlike "*Stack*" -or $_.FullName -like "*StackEdge*" -or $_.FullName -like "*StackHCI*") -and $_.FullName -notlike "*.Test*" }
+    $ToolsCommonDllPath = [System.IO.Path]::Combine($PSScriptRoot, '..', 'artifacts', 'StaticAnalysis', 'Tools.Common.dll')
+    if (([System.AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.Location -eq $ToolsCommonDllPath}).Count -eq 0)
+    {
+        $null = [System.Reflection.Assembly]::LoadFrom($ToolsCommonDllPath)
+    }
+    $CsprojFiles = Get-ChildItem -Path $ServiceFolderPath -Filter "*.csproj" -Recurse | Where-Object { (-not [Tools.Common.Utilities.ModuleFilter]::IsAzureStackModule($_.FullName)) -and $_.FullName -notlike "*.Test*" }
     foreach ($CsprojFile in $CsprojFiles)
     {
         $Key = $CsprojFile.BaseName

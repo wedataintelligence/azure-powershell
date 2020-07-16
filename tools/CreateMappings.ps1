@@ -15,8 +15,14 @@ $rules = Get-Content -Raw -Path $RulesFile | ConvertFrom-Json;
 $results = @{};
 $warnings = @();
 
+$ToolsCommonDllPath = [System.IO.Path]::Combine($PSScriptRoot, '..', 'artifacts', 'StaticAnalysis', 'Tools.Common.dll')
+if (([System.AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.Location -eq $ToolsCommonDllPath}).Count -eq 0)
+{
+    $null = [System.Reflection.Assembly]::LoadFrom($ToolsCommonDllPath)
+}
 # Find all cmdlet names by help file names in the repository.
-$cmdlets = Get-ChildItem $RootPath -Recurse | Where-Object { $_.FullName -cmatch ".*\\help\\.*-.*.md" -and ($_.FullName -notlike "*Stack*" -or $_.FullName -like "*StackEdge*" -or $_.FullName -like "*StackHCI*") };
+$cmdlets = Get-ChildItem $RootPath -Recurse | Where-Object { $_.FullName -cmatch ".*\\help\\.*-.*.md" -and (-not [Tools.Common.Utilities.ModuleFilter]::IsAzureStackModule($_.FullName)) };
+
 
 $k = 0;
 $cmdlets | ForEach-Object {

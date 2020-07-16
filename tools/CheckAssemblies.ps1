@@ -41,10 +41,17 @@ $DependencyMapPath = "$PSScriptRoot\..\artifacts\StaticAnalysisResults\Dependenc
 
 $DependencyMap = Import-Csv -Path $DependencyMapPath
 
+
+$ToolsCommonDllPath = [System.IO.Path]::Combine($PSScriptRoot, '..', 'artifacts', 'StaticAnalysis', 'Tools.Common.dll')
+if (([System.AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.Location -eq $ToolsCommonDllPath}).Count -eq 0)
+{
+    $null = [System.Reflection.Assembly]::LoadFrom($ToolsCommonDllPath)
+}
 $ModuleManifestFiles = $ProjectPaths | ForEach-Object { Get-ChildItem -Path $_ -Filter "*.psd1" -Recurse | Where-Object { $_.FullName -like "*$($BuildConfig)*" -and `
             $_.FullName -notlike "*Netcore*" -and `
             $_.FullName -notlike "*dll-Help.psd1*" -and `
-            ($_.FullName -notlike "*Stack*" -or $_.FullName -like "*StackEdge*" -or $_.FullName -like "*StackHCI*") } }
+            (-not [Tools.Common.Utilities.ModuleFilter]::IsAzureStackModule($_.FullName)) } }
+
 
 foreach ($ModuleManifest in $ModuleManifestFiles) {
     Write-Host "checking $($ModuleManifest.Fullname)"

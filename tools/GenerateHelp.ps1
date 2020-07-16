@@ -13,7 +13,14 @@ Param(
 
 $ResourceManagerFolders = Get-ChildItem -Directory -Path "$PSScriptRoot\..\src" | Where-Object { $_.Name -ne 'lib' -and $_.Name -ne 'Package' -and $_.Name -ne 'packages' }
 Import-Module "$PSScriptRoot\HelpGeneration\HelpGeneration.psm1"
-$UnfilteredHelpFolders = Get-ChildItem -Include 'help' -Path "$PSScriptRoot\..\artifacts" -Recurse -Directory | where { $_.FullName -like "*$BuildConfig*" -and ($_.FullName -notlike "*Stack*" -or $_.FullName -like "*StackEdge*" -or $_.FullName -like "*StackHCI*") }
+
+$ToolsCommonDllPath = [System.IO.Path]::Combine($PSScriptRoot, '..', 'artifacts', 'StaticAnalysis', 'Tools.Common.dll')
+if (([System.AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.Location -eq $ToolsCommonDllPath}).Count -eq 0)
+{
+    $null = [System.Reflection.Assembly]::LoadFrom($ToolsCommonDllPath)
+}
+$UnfilteredHelpFolders = Get-ChildItem -Include 'help' -Path "$PSScriptRoot\..\artifacts" -Recurse -Directory | where { $_.FullName -like "*$BuildConfig*" -and (-not [Tools.Common.Utilities.ModuleFilter]::IsAzureStackModule($_.FullName)) }
+
 $FilteredHelpFolders = $UnfilteredHelpFolders
 if (![string]::IsNullOrEmpty($FilteredModules))
 {

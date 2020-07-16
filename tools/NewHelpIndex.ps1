@@ -72,7 +72,13 @@ $RMpsd1s += Get-ChildItem -Path $resourceManagerPath -Depth 2 | Where-Object {
     $_.Name -like "*.psd1" -and $_.FullName -notlike "*dll-Help*" -and $_.Name -ne "SecretManagementExtension.psd1"
 }
 
-$HelpFolders += Get-ChildItem -Path "$PSScriptRoot/../src" -Recurse -Directory | where { $_.Name -eq "help" -and ($_.FullName -notlike "*Stack*" -or $_.FullName -like "*StackEdge*" -or $_.FullName -like "*StackHCI*") -and $_.FullName -notlike "*\bin\*"}
+$ToolsCommonDllPath = [System.IO.Path]::Combine($PSScriptRoot, '..', 'artifacts', 'StaticAnalysis', 'Tools.Common.dll')
+if (([System.AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.Location -eq $ToolsCommonDllPath}).Count -eq 0)
+{
+    $null = [System.Reflection.Assembly]::LoadFrom($ToolsCommonDllPath)
+}
+$HelpFolders += Get-ChildItem -Path "$PSScriptRoot/../src" -Recurse -Directory | where { $_.Name -eq "help" -and (-not [Tools.Common.Utilities.ModuleFilter]::IsAzureStackModule($_.FullName)) -and $_.FullName -notlike "*\bin\*"}
+
 
 # Map the name of the cmdlet to the location of the help file
 $HelpFileMapping = @{}

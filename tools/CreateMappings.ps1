@@ -15,7 +15,7 @@ $rules = Get-Content -Raw -Path $RulesFile | ConvertFrom-Json;
 $results = @{};
 $warnings = @();
 
-.\PreloadToolDll.ps1
+Invoke-Command -FilePath "$PSScriptRoot\PreloadToolDll.ps1"
 # Find all cmdlet names by help file names in the repository.
 $cmdlets = Get-ChildItem $RootPath -Recurse | Where-Object { $_.FullName -cmatch ".*\\help\\.*-.*.md" -and (-not [Tools.Common.Utilities.ModuleFilter]::IsAzureStackModule($_.FullName)) };
 

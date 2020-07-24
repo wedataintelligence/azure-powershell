@@ -42,7 +42,7 @@ $DependencyMapPath = "$PSScriptRoot\..\artifacts\StaticAnalysisResults\Dependenc
 $DependencyMap = Import-Csv -Path $DependencyMapPath
 
 
-.\PreloadToolDll.ps1
+Invoke-Command -FilePath "$PSScriptRoot\PreloadToolDll.ps1"
 $ModuleManifestFiles = $ProjectPaths | ForEach-Object { Get-ChildItem -Path $_ -Filter "*.psd1" -Recurse | Where-Object { $_.FullName -like "*$($BuildConfig)*" -and `
             $_.FullName -notlike "*Netcore*" -and `
             $_.FullName -notlike "*dll-Help.psd1*" -and `

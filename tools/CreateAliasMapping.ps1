@@ -1,7 +1,7 @@
 $mapping = [ordered]@{}
 
 
-.\PreloadToolDll.ps1
+Invoke-Command -FilePath "$PSScriptRoot\PreloadToolDll.ps1"
 $psd1s = Get-ChildItem -Path $PSScriptRoot/../src -Recurse | `
     Where-Object {($_.Name -like "*AzureRM*psd1"  -or $_.Name -eq "Azure.AnalysisServices.psd1" -or $_.Name -eq "Azure.Storage.psd1") `
     -and (-not [Tools.Common.Utilities.ModuleFilter]::IsAzureStackModule($_.FullName)) -and $_.FullName -notlike "*`\Package`\*" -and $_.FullName -notlike "*Test*" -and $_.FullName -notlike "*`\bin`\*" -and $_.FullName -notlike "*`\obj`\*"}

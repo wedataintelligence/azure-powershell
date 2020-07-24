@@ -134,7 +134,7 @@ function Get-ReleaseNotes
 
     $ProjectPaths = @( "$RootPath\src" )
     
-    .\PreloadToolDll.ps1
+    Invoke-Command -FilePath "$PSScriptRoot\PreloadToolDll.ps1"
     $ModuleManifestFile = $ProjectPaths | % { Get-ChildItem -Path $_ -Filter "*.psd1" -Recurse | where { $_.Name.Replace(".psd1", "") -eq $Module -and `
                                                                                                           $_.FullName -notlike "*Debug*" -and `
                                                                                                           $_.FullName -notlike "*Netcore*" -and `

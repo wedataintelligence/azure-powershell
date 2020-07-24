@@ -198,7 +198,7 @@ function Add-SolutionReference
         [string]$ServiceFolderPath
     )
 
-    .\PreloadToolDll.ps1
+    Invoke-Command -FilePath "$PSScriptRoot\PreloadToolDll.ps1"
     $CsprojFiles = Get-ChildItem -Path $ServiceFolderPath -Filter "*.csproj" -Recurse | Where-Object { (-not [Tools.Common.Utilities.ModuleFilter]::IsAzureStackModule($_.FullName)) -and $_.FullName -notlike "*.Test*" }
     foreach ($CsprojFile in $CsprojFiles)
     {

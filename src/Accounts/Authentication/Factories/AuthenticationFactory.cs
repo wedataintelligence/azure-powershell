@@ -455,7 +455,7 @@ namespace Microsoft.Azure.Commands.Common.Authentication.Factories
                 ResourceClientUri = audience,
                 AdDomain = tenantId,
                 ValidateAuthority = !environment.OnPremise,
-                TokenCache = tokenCache
+                //TokenCache = tokenCache
             };
         }
 
@@ -527,11 +527,12 @@ namespace Microsoft.Azure.Commands.Common.Authentication.Factories
                 case AzureAccount.AccountType.User:
                     if (password == null)
                     {
-                        if (!string.IsNullOrEmpty(account.Id))
-                        {
-                            return new SilentParameters(authenticationClientFactory, environment, tokenCache, tenant, resourceId, account.Id);
-                        }
-                        else if (account.IsPropertySet("UseDeviceAuth"))
+                        //if (!string.IsNullOrEmpty(account.Id))
+                        //{
+                        //    return new SilentParameters(authenticationClientFactory, environment, tokenCache, tenant, resourceId, account.Id);
+                        //}
+                        //else 
+                        if (account.IsPropertySet("UseDeviceAuth"))
                         {
                             return new DeviceCodeParameters(authenticationClientFactory, environment, tokenCache, tenant, resourceId);
                         }

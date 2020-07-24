@@ -19,11 +19,13 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Azure.Core;
+using Azure.Identity;
+
 using Hyak.Common;
 using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
-using Microsoft.Identity.Client;
-using Microsoft.Identity.Client.Extensibility;
 
 namespace Microsoft.Azure.PowerShell.Authenticators
 {
@@ -40,34 +42,54 @@ namespace Microsoft.Azure.PowerShell.Authenticators
         private const int AadPortStart = 8400;
         private const int AadPortEnd = 9000;
 
+        private InteractiveBrowserCredential InteractiveBrowserCredential { get; set; }
+
+        public InteractiveUserAuthenticator()
+        {
+            var options = new InteractiveBrowserCredentialOptions()
+            {
+                EnablePersistentCache = true,
+                ClientId = AuthenticationHelpers.PowerShellClientId,
+                DisableAutomaticAuthentication = true
+            };
+
+            InteractiveBrowserCredential = new InteractiveBrowserCredential(options);
+        }
+
         public override Task<IAccessToken> Authenticate(AuthenticationParameters parameters, CancellationToken cancellationToken)
         {
             var interactiveParameters = parameters as InteractiveParameters;
             var onPremise = interactiveParameters.Environment.OnPremise;
             var authenticationClientFactory = interactiveParameters.AuthenticationClientFactory;
-            IPublicClientApplication publicClient = null;
+            //IPublicClientApplication publicClient = null;
             var resource = interactiveParameters.Environment.GetEndpoint(interactiveParameters.ResourceId) ?? interactiveParameters.ResourceId;
             var scopes = AuthenticationHelpers.GetScope(onPremise, resource);
 
             try
             {
-                var replyUrl = GetReplyUrl(onPremise, interactiveParameters);
+                var tokenRequestContext = new TokenRequestContext(scopes);
+                var authTask = InteractiveBrowserCredential.AuthenticateAsync(cancellationToken);
+                //return MsalAccessToken.GetAccessTokenAsync(authTask, () => InteractiveBrowserCredential.GetTokenAsync(tokenRequestContext, cancellationToken));
+                var tokenTask = InteractiveBrowserCredential.GetTokenAsync(tokenRequestContext, cancellationToken);
+                return MsalAccessToken.GetAccessTokenAsync(tokenTask);
 
-                if (!string.IsNullOrEmpty(replyUrl))
-                {
-                    var clientId = AuthenticationHelpers.PowerShellClientId;
-                    var authority = onPremise ?
-                                        interactiveParameters.Environment.ActiveDirectoryAuthority :
-                                        AuthenticationHelpers.GetAuthority(parameters.Environment, parameters.TenantId);
-                    TracingAdapter.Information(string.Format("[InteractiveUserAuthenticator] Creating IPublicClientApplication - ClientId: '{0}', Authority: '{1}', ReplyUrl: '{2}' UseAdfs: '{3}'", clientId, authority, replyUrl, onPremise));
-                    publicClient = authenticationClientFactory.CreatePublicClient(clientId: clientId, authority: authority, redirectUri: replyUrl, useAdfs: onPremise);
-                    TracingAdapter.Information(string.Format("[InteractiveUserAuthenticator] Calling AcquireTokenInteractive - Scopes: '{0}'", string.Join(",", scopes)));
-                    var interactiveResponse = publicClient.AcquireTokenInteractive(scopes)
-                        .WithCustomWebUi(new CustomWebUi())
-                        .ExecuteAsync(cancellationToken);
-                    cancellationToken.ThrowIfCancellationRequested();
-                    return AuthenticationResultToken.GetAccessTokenAsync(interactiveResponse);
-                }
+                //var replyUrl = GetReplyUrl(onPremise, interactiveParameters);
+
+                //if (!string.IsNullOrEmpty(replyUrl))
+                //{
+                //    var clientId = AuthenticationHelpers.PowerShellClientId;
+                //    var authority = onPremise ?
+                //                        interactiveParameters.Environment.ActiveDirectoryAuthority :
+                //                        AuthenticationHelpers.GetAuthority(parameters.Environment, parameters.TenantId);
+                //    TracingAdapter.Information(string.Format("[InteractiveUserAuthenticator] Creating IPublicClientApplication - ClientId: '{0}', Authority: '{1}', ReplyUrl: '{2}' UseAdfs: '{3}'", clientId, authority, replyUrl, onPremise));
+                //    publicClient = authenticationClientFactory.CreatePublicClient(clientId: clientId, authority: authority, redirectUri: replyUrl, useAdfs: onPremise);
+                //    TracingAdapter.Information(string.Format("[InteractiveUserAuthenticator] Calling AcquireTokenInteractive - Scopes: '{0}'", string.Join(",", scopes)));
+                //    var interactiveResponse = publicClient.AcquireTokenInteractive(scopes)
+                //        .WithCustomWebUi(new CustomWebUi())
+                //        .ExecuteAsync(cancellationToken);
+                //    cancellationToken.ThrowIfCancellationRequested();
+                //    return AuthenticationResultToken.GetAccessTokenAsync(interactiveResponse);
+                //}
             }
             catch
             {

@@ -18,7 +18,7 @@ namespace Microsoft.Azure.PowerShell.Authenticators
 {
     public class DefaultAuthenticatorBuilder : IAuthenticatorBuilder
     {
-        public DefaultAuthenticatorBuilder()
+        public DefaultAuthenticatorBuilder(bool enableTokenCache, bool enableTokenFallbackAsPlainText)
         {
             AppendAuthenticator(() => { return new InteractiveUserAuthenticator(); });
             AppendAuthenticator(() => { return new DeviceCodeAuthenticator(); });

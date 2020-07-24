@@ -134,11 +134,7 @@ function Get-ReleaseNotes
 
     $ProjectPaths = @( "$RootPath\src" )
     
-    $ToolsCommonDllPath = [System.IO.Path]::Combine($PSScriptRoot, '..', 'artifacts', 'StaticAnalysis', 'Tools.Common.dll')
-    if (([System.AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.Location -eq $ToolsCommonDllPath}).Count -eq 0)
-    {
-        $null = [System.Reflection.Assembly]::LoadFrom($ToolsCommonDllPath)
-    }
+    .\PreloadToolDll.ps1
     $ModuleManifestFile = $ProjectPaths | % { Get-ChildItem -Path $_ -Filter "*.psd1" -Recurse | where { $_.Name.Replace(".psd1", "") -eq $Module -and `
                                                                                                           $_.FullName -notlike "*Debug*" -and `
                                                                                                           $_.FullName -notlike "*Netcore*" -and `
